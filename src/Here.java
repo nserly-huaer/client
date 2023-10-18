@@ -4,16 +4,21 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Scanner;
 
-public class Here {
+public class Here {//如果退出代码小于2则为正常退出，否则为异常退出
     public static final Scanner sc = new Scanner(System.in);
     public static final File PATH = new File("client.log");
+    public static boolean div2;
 
     public static void main(String[] args) {
         try {
             System.out.println("请输入服务器IP");
+            Write("INFO", "请输入服务器IP");
             String IP = sc.next();
+            Write("INFO", "用户输入:" + IP);
             System.out.println("请输入服务器端口");
+            Write("INFO", "请输入服务器端口");
             int port = sc.nextInt();
+            Write("INFO", "用户输入:" + port);
             // 创建客户端套接字，连接服务器
             Socket socket = new Socket(IP, port);
 
@@ -29,8 +34,12 @@ public class Here {
         }
     }
 
+    public static void Write(String level, String message) {
+        String write = getFirst(level) + message;
+        WriteLog(write);
+    }
+
     public static void ReadServerMessage(String message) {
-        message = message.trim();
         if (message.startsWith("log")) {
             String[] cache1 = message.split(" ", 2);
             String[] cache2 = cache1[0].split("-", 2);
@@ -50,15 +59,21 @@ public class Here {
             String[] de = message.split(" ", 2);
             long del = Long.parseLong(de[1]);
             long time = System.currentTimeMillis();
-            System.out.println("服务器与客户端之间的延迟为：" + (time - del));
+            if (div2)
+                System.out.println("服务器与客户端之间的延迟为：" + ((time - del) / 2) + "ms");
+            else
+                System.out.println("服务器与客户端之间的延迟为：" + (time - del) + "ms");
             try {
                 String time1 = "reDelay " + String.valueOf(time - del);
-                SendThread.out.write(time1.getBytes());
+                if (!div2)
+                    SendThread.out.write(time1.getBytes());
+                div2 = false;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
             System.out.println(message);
+            Write("INFO", message);
         }
     }
 
@@ -84,12 +99,15 @@ public class Here {
     }
 
     private static void WriteLog(String message) {
+        message = message.trim();
+        message += "\n";
         FileOutputStream f = null;
         BufferedOutputStream bu = null;
         try {
             f = new FileOutputStream(PATH, true);
             bu = new BufferedOutputStream(f);
             bu.write(message.getBytes());
+            bu.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -123,7 +141,7 @@ class ReadThread implements Runnable {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Here.Write("Error", "用户输入：" + e.toString());
         }
     }
 }
@@ -143,18 +161,26 @@ class SendThread implements Runnable {
         try {
             while (true) {
                 out = socket.getOutputStream();
-
                 // 发送消息给服务器
                 String message = sc.nextLine();
+                Here.Write("INFO", "用户输入：" + message);
                 if (message.toLowerCase().trim().equals("$exit")) {
                     socket.close();
+                    System.exit(1);
+                } else if (message.toLowerCase().trim().equals("delay")) {
+                    Here.div2 = true;
+                    String cache = "getDelay " + System.currentTimeMillis();
+                    out.write(cache.getBytes());
+                    continue;
                 }
                 out.write(message.getBytes());
+                out.flush();
             }
 
 
         } catch (IOException e) {
             e.printStackTrace();
+            Here.Write("Error", "用户输入：" + e.toString());
         }
     }
 }
