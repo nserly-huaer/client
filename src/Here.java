@@ -104,6 +104,9 @@ public class Here {//如果退出代码小于2则为正常退出，否则为异�
         FileOutputStream f = null;
         BufferedOutputStream bu = null;
         try {
+            if(!PATH.exists()){
+                PATH.createNewFile();
+            }
             f = new FileOutputStream(PATH, true);
             bu = new BufferedOutputStream(f);
             bu.write(message.getBytes());
