@@ -50,10 +50,13 @@ public class Here {//如果退出代码小于2则为正常退出，否则为异�
             String result = getFirst(level) + LogMessage;
             level(level, result);
             WriteLog(result);
+        } else if (message.startsWith("messageSender")) {
+            String[] info = message.split(" ", 2);
+            System.out.println(info[1]);
         } else if (message.startsWith("information")) {
 
             String[] info = message.split(" ", 2);
-            System.out.println("服务器管理员发送：" + info);
+            System.out.println("服务器管理员发送：" + info[1]);
 
         } else if (message.startsWith("delay")) {
             String[] de = message.split(" ", 2);
@@ -104,7 +107,7 @@ public class Here {//如果退出代码小于2则为正常退出，否则为异�
         FileOutputStream f = null;
         BufferedOutputStream bu = null;
         try {
-            if(!PATH.exists()){
+            if (!PATH.exists()) {
                 PATH.createNewFile();
             }
             f = new FileOutputStream(PATH, true);
@@ -167,17 +170,22 @@ class SendThread implements Runnable {
                 // 发送消息给服务器
                 String message = sc.nextLine();
                 Here.Write("INFO", "用户输入：" + message);
-                if (message.toLowerCase().trim().equals("$exit")) {
+                if (message.trim().toLowerCase().equals("$exit")) {
+                    out.write("exit".getBytes());
+                    out.flush();
                     socket.close();
                     System.exit(1);
-                } else if (message.toLowerCase().trim().equals("delay")) {
+                } else if (message.trim().toLowerCase().equals("delay")) {
                     Here.div2 = true;
-                    String cache = "getDelay " + System.currentTimeMillis();
+                    String cache = "getdelay " + System.currentTimeMillis();
                     out.write(cache.getBytes());
                     continue;
+                } else {
+                    message = "messageSender " + message;
+                    out.write(message.getBytes());
+                    out.flush();
                 }
-                out.write(message.getBytes());
-                out.flush();
+
             }
 
 
